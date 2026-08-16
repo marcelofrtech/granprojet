@@ -73,6 +73,42 @@ app.get('/associacoes', (req, res) => {
 
 // Porta do servidor
 const PORT = process.env.PORT || 3000;
+
+// 1. Novo Endpoint: Buscar produtos sem fornecedor associado
+app.get('/produtos/sem-fornecedor', (req, res) => {
+  const query = `
+    SELECT p.* 
+    FROM produtos p 
+    LEFT JOIN produto_fornecedor pf ON p.id = pf.produto_id 
+    WHERE pf.produto_id IS NULL
+  `;
+  
+  db.all(query, [], (err, rows) => {
+    if (err) {
+      console.error(err.message);
+      return res.status(500).json({ error: 'Erro ao buscar produtos sem fornecedor.' });
+    }
+    res.json(rows);
+  });
+});
+
+// 2. Novo Endpoint: Relatório com métricas do sistema
+app.get('/relatorio/resumo', (req, res) => {
+  const query = `
+    SELECT 
+      (SELECT COUNT(*) FROM produtos) AS total_produtos,
+      (SELECT COUNT(*) FROM fornecedores) AS total_fornecedores,
+      (SELECT COUNT(*) FROM produto_fornecedor) AS total_associacoes
+  `;
+  
+  db.get(query, [], (err, row) => {
+    if (err) {
+      console.error(err.message);
+      return res.status(500).json({ error: 'Erro ao gerar relatório.' });
+    }
+    res.json(row);
+  });
+});
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
